@@ -65,15 +65,6 @@ define(function(require, exports, module) {
 			
 			//get configuration
 			FileManager.getCache(workspaceId, '/tsconfig.json', function(data, err) {
-				if (err) {
-					return Notification.open({
-						type: 'error',
-						title: 'TypeScript compilation failed',
-						description: err.message,
-						autoClose: true
-					});
-				}
-				
 				var config = {};
 				if (data) {
 					try { 
