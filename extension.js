@@ -1,12 +1,11 @@
 define(function(require, exports, module) {
-	var ExtensionManager = require('code/extensionManager');
+	var ExtensionManager = require('core/extensionManager');
 	
-	var Code = require('code/code');
-	var Socket = require('code/socket');
-	var Workspace = require('code/workspace');
-	var Notification = require('code/notification');
-	var Fn = require('code/fn');
-	var FileManager = require('code/fileManager');
+	var Socket = require('core/socket');
+	var Workspace = require('core/workspace');
+	var Notification = require('core/notification');
+	var Fn = require('core/fn');
+	var FileManager = require('core/fileManager');
 	
 	var EditorSession = require('modules/editor/ext/session');
 	
