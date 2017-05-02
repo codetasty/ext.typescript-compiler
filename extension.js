@@ -8,19 +8,20 @@ define(function(require, exports, module) {
 	var FileManager = require('core/fileManager');
 	
 	var EditorSession = require('modules/editor/ext/session');
+	var EditorEditors = require('modules/editor/ext/editors');
 	
 	var Extension = ExtensionManager.register({
 		name: 'typescript-compiler'
 	}, {
 		init: function() {
-			EditorSession.on('save', this.onSave);
+			EditorEditors.on('save', this.onSave);
 		},
 		destroy: function() {
-			EditorSession.off('save', this.onSave);
+			EditorEditors.off('save', this.onSave);
 		},
-		onSave: function(e) {
-			if (Extension._exts.indexOf(e.storage.extension) !== -1) {
-				Extension.compile(e.storage.workspaceId, e.storage.path, e.session.data.$worker, e.session.data.getValue());
+		onSave: function(session, value) {
+			if (Extension._exts.indexOf(session.storage.extension) !== -1) {
+				Extension.compile(session.storage.workspaceId, session.storage.path, session.data.$worker, value);
 			}
 		},
 		_exts: ['ts'],
@@ -65,6 +66,12 @@ define(function(require, exports, module) {
 			this.importWorkspace = workspaceId;
 			this.importPath = path;
 			
+			var $notification = Notification.open({
+				type: 'default',
+				title: 'TypeScript compilation',
+				description: 'Compiling <strong>' + path + '</strong>',
+			});
+			
 			//get configuration
 			FileManager.getCache(workspaceId, '/tsconfig.json', function(data, err) {
 				var config = {};
@@ -78,6 +85,8 @@ define(function(require, exports, module) {
 				
 				$worker.call('compile', [doc, config], function(data) {
 					if (data.errors.length) {
+						$notification.trigger('close');
+						
 						return Notification.open({
 							type: 'error',
 							title: 'TypeScript compilation failed',
@@ -88,7 +97,16 @@ define(function(require, exports, module) {
 						});
 					}
 					
-					FileManager.saveFile(workspaceId, destination, data.output, null);
+					FileManager.save({
+						id: workspaceId,
+						path: destination,
+						data: function() {
+							$notification.trigger('close');
+						},
+						error: function() {
+							$notification.trigger('close');
+						}
+					}, data.output);
 				});
 			});
 		}
