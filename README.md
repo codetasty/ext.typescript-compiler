@@ -3,9 +3,9 @@
 typescript-compiler is an extension for the code editor CodeTasty that adds automatic compilation of TypeScript files upon saving.
 
 ## Configuration
+There are 2 methods to configure the extension.
 
-### 1, Configuration file (recommended)
-
+### 1, Configuration file
 Create or edit **codetasty.json** file in the workspace root.
 
 ```
@@ -40,7 +40,7 @@ Type: `String`, Required
 Destination where the compiled output is saved.
 
 
-### 2, Inline comment (deprecated)
+### 2, Inline comment
 
 Compile options can be set in the first line of the edited file, separated by comma.
 
