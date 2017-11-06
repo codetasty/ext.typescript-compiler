@@ -1,19 +1,30 @@
+/* global define, $ */
+"use strict";
+
 define(function(require, exports, module) {
-	var ExtensionManager = require('core/extensionManager');
+	const ExtensionManager = require('core/extensionManager');
 	
-	var Utils = require('core/utils');
-	var FileManager = require('core/fileManager');
+	const Utils = require('core/utils');
+	const FileManager = require('core/fileManager');
 	
-	var EditorSession = require('modules/editor/ext/session');
-	var EditorEditors = require('modules/editor/ext/editors');
-	var EditorCompiler = require('modules/editor/ext/compiler');
+	const EditorSession = require('modules/editor/ext/session');
+	const EditorEditors = require('modules/editor/ext/editors');
+	const EditorCompiler = require('modules/editor/ext/compiler');
 	
-	var Extension = ExtensionManager.register({
-		name: 'typescript-compiler'
-	}, {
-		watcher: null,
-		compilerName: 'TypeScript',
-		init: function() {
+	class Extension extends ExtensionManager.Extension {
+		constructor() {
+			super({
+				name: 'typescript-compiler',
+			});
+			
+			this.watcher = null;
+			
+			this.compilerName = 'TypeScript';
+		}
+		
+		init() {
+			super.init();
+			
 			this.watcher = EditorCompiler.addWatcher(this.name, {
 				property: 'source',
 				extensions: ['ts'],
@@ -21,13 +32,19 @@ define(function(require, exports, module) {
 				comments: true,
 				watch: this.onWatch.bind(this),
 			});
-		},
-		destroy: function() {
+		}
+		
+		destroy() {
+			super.destroy();
+			
 			this.watcher = null;
 			EditorCompiler.removeWatcher(this.name);
-		},
-		onWatch: function(workspaceId, obj, session, value) {
-			FileManager.getCache(workspaceId, '/tsconfig.json', function(data, err) {
+		}
+		
+		onWatch(workspaceId, obj, session, value) {
+			FileManager.getCache(workspaceId, '/tsconfig.json').catch(e => {
+				return null;
+			}).then(data => {
 				var config = {};
 				try { 
 					config = data ? JSON.parse(data) : config;
@@ -52,13 +69,14 @@ define(function(require, exports, module) {
 					
 					compiler.file = this.onFile.bind(this);
 				}.bind(this));
-			}.bind(this));
-		},
-		onFile: function(compiler, path, file) {
+			});
+		}
+		
+		onFile(compiler, path, file) {
 			compiler.worker.call('compile', [file, compiler.config], function(data) {
 				if (data.errors.length) {
 					compiler.destroy(new Error(
-						__('%s on <strong>%s:%s</strong> in file <strong>%s</strong>.', data.errors[0].text, data.errors[0].row+1, data.errors[0].column+1, Utils.path.humanize(path))
+						'%s on <strong>%s:%s</strong> in file <strong>%s</strong>.'.sprintfEscape(data.errors[0].text, data.errors[0].row+1, data.errors[0].column+1, path)
 					));
 					
 					return EditorCompiler.removeCompiler(compiler);
@@ -78,8 +96,8 @@ define(function(require, exports, module) {
 					}).join("\n"));
 				}
 			});
-		},
-	});
+		}
+	}
 
-	module.exports = Extension;
+	module.exports = new Extension();
 });
